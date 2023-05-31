@@ -1,0 +1,17 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "zephyr build",
+            "type": "shell",
+            "command": "west build -b nrf52840_mdk_usb_dongle ."
+        },
+        {
+            "label": "zephyr build always",
+            "type": "shell",
+            "command": "west build -p always -b nrf52840_mdk_usb_dongle ."
+        }
+    ]
+}

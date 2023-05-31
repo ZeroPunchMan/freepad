@@ -1,0 +1,36 @@
+{
+    "nrf-connect.toolchain.path": "PATH",
+    "nrf-connect.topdir": "${nrf-connect.sdk:2.3.0}",
+    "files.associations": {
+        "usb_device.h": "c",
+        "types.h": "c",
+        "byteorder.h": "c",
+        "settings.h": "c",
+        "hci.h": "c",
+        "gatt.h": "c",
+        "att.h": "c",
+        "printk.h": "c",
+        "bluetooth.h": "c",
+        "uuid.h": "c",
+        "systime.h": "c",
+        "ds4_hid_desc.h": "c",
+        "conn.h": "c",
+        "cl_common.h": "c",
+        "stdbool.h": "c",
+        "ble_agent.h": "c"
+    },
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true,
+        "clib/.vscode":true,
+        "clib/testcase":true,
+        "clib/.git":true,
+        "clib/.gitignore":true,
+        "clib/Makefile":true,
+
+    }
+}
