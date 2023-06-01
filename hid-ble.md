@@ -237,9 +237,10 @@ reserved
 ```
 
 ## todos
-1.bonds & direct adv,定向时可连?  bt_le_ext_adv_foreach  bt_le_adv_lookup_legacy
-2.settings subsystem
-3.usb subsystem
-4.boards
-5.boards low energy
-6.mcuboot
+1.bonds & direct adv -- ok
+2.logging
+3.settings subsystem
+4.usb subsystem
+5.boards
+6.boards low energy
+7.mcuboot

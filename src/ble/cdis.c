@@ -50,7 +50,6 @@ static ssize_t read_str(struct bt_conn *conn,
 			  const struct bt_gatt_attr *attr, void *buf,
 			  uint16_t len, uint16_t offset)
 {
-	printk("read pnp str\r\n");
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, attr->user_data,
 				 strlen(attr->user_data));
 }
@@ -59,7 +58,6 @@ static ssize_t read_pnp_id(struct bt_conn *conn,
 			   const struct bt_gatt_attr *attr, void *buf,
 			   uint16_t len, uint16_t offset)
 {
-	printk("read pnp id\r\n");
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, &dis_pnp_id,
 				 sizeof(dis_pnp_id));
 }

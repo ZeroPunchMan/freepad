@@ -82,6 +82,7 @@ static void OnBleConnected(struct bt_conn *conn, uint8_t err)
     {
         printk("Failed to connect to %s (%u)\n", addr, err);
 
+        //directed advertising timeout
         dirAdvHighDuty = false;
         BleRestart();
     }
@@ -90,11 +91,6 @@ static void OnBleConnected(struct bt_conn *conn, uint8_t err)
         printk("Connected %s\n", addr);
     }
 
-    // not-- smp
-    // if (bt_conn_set_security(conn, BT_SECURITY_L2))
-    // {
-    // 	printk("Failed to set security\n");
-    // }
 }
 
 static void OnBledisconnected(struct bt_conn *conn, uint8_t reason)
@@ -109,7 +105,6 @@ static void OnBledisconnected(struct bt_conn *conn, uint8_t reason)
     BleRestart();
 }
 
-// not-- smp
 static void security_changed(struct bt_conn *conn, bt_security_t level,
                              enum bt_security_err err)
 {
@@ -131,7 +126,7 @@ static void security_changed(struct bt_conn *conn, bt_security_t level,
 BT_CONN_CB_DEFINE(conn_callbacks) = {
     .connected = OnBleConnected,
     .disconnected = OnBledisconnected,
-    .security_changed = security_changed, // not-- smp
+    .security_changed = security_changed, 
 };
 
 static void auth_cancel(struct bt_conn *conn)
@@ -187,7 +182,6 @@ static void bt_ready(int err)
 
     hog_init();
 
-    // not-- smp
     if (IS_ENABLED(CONFIG_SETTINGS))
     {
         settings_load();
