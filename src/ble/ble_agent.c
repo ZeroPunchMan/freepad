@@ -11,6 +11,8 @@
 #include "hog.h"
 #include "systime.h"
 
+
+
 //***********************ble*********************************
 static const struct bt_data ad[] = {
     BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
@@ -21,6 +23,27 @@ static const struct bt_data ad[] = {
     BT_DATA_BYTES(BT_DATA_GAP_APPEARANCE, BT_UUID_16_ENCODE(CONFIG_BT_DEVICE_APPEARANCE)),
 };
 //
+static void bt_ready(int err);
+
+static bool dirAdvHighDuty = true;
+static void BleRestart(void)
+{
+    int err;
+    err = bt_disable();
+    if (err)
+    {
+        printk("Buetooth disable failed (err %d)\n", err);
+        return;
+    }
+    err = bt_enable(bt_ready);
+    if (err)
+    {
+        printk("Bluetooth init failed (err %d)\n", err);
+        return;
+    }
+}
+
+
 
 static void bt_ready(int err);
 
@@ -32,17 +55,17 @@ void EnumOnBond(const struct bt_bond_info *info,
     bondAddr = info->addr;
     deviceBond = true;
 
-    // printk("bond: %02x:%02x:%02x:%02x:%02x:%02x--%d",
-    // 	   info->addr.a.val[0],
-    // 	   info->addr.a.val[1],
-    // 	   info->addr.a.val[2],
-    // 	   info->addr.a.val[3],
-    // 	   info->addr.a.val[4],
-    // 	   info->addr.a.val[5],
-    // 	   info->addr.type);
+    printk("bond: %02x:%02x:%02x:%02x:%02x:%02x--%d",
+    	   info->addr.a.val[0],
+    	   info->addr.a.val[1],
+    	   info->addr.a.val[2],
+    	   info->addr.a.val[3],
+    	   info->addr.a.val[4],
+    	   info->addr.a.val[5],
+    	   info->addr.type);
 }
 
-static bool GetBondAddr()
+static bool GetBondAddr(void)
 {
     deviceBond = false;
     bt_foreach_bond(BT_ID_DEFAULT, EnumOnBond, NULL);
@@ -59,19 +82,8 @@ static void OnBleConnected(struct bt_conn *conn, uint8_t err)
     {
         printk("Failed to connect to %s (%u)\n", addr, err);
 
-        // int err;
-        // err = bt_disable();
-        // if (err)
-        // {
-        //     printk("Buetooth disable failed (err %d)\n", err);
-        //     return;
-        // }
-        // err = bt_enable(bt_ready);
-        // if (err)
-        // {
-        //     printk("Bluetooth init failed (err %d)\n", err);
-        //     return;
-        // }
+        dirAdvHighDuty = false;
+        BleRestart();
     }
     else
     {
@@ -93,19 +105,8 @@ static void OnBledisconnected(struct bt_conn *conn, uint8_t reason)
 
     printk("Disconnected from %s (reason 0x%02x)\n", addr, reason);
 
-    int err;
-    err = bt_disable();
-    if (err)
-    {
-        printk("Bluetooth disable failed (err %d)\n", err);
-        return;
-    }
-    err = bt_enable(bt_ready);
-    if (err)
-    {
-        printk("Bluetooth init failed (err %d)\n", err);
-        return;
-    }
+    dirAdvHighDuty = true;
+    BleRestart();
 }
 
 // not-- smp
@@ -132,55 +133,6 @@ BT_CONN_CB_DEFINE(conn_callbacks) = {
     .disconnected = OnBledisconnected,
     .security_changed = security_changed, // not-- smp
 };
-
-static void bt_ready(int err)
-{
-    if (err)
-    {
-        printk("Bluetooth init failed (err %d)\n", err);
-        return;
-    }
-
-    printk("Bluetooth initialized\n");
-
-    hog_init();
-
-    // not-- smp
-    if (IS_ENABLED(CONFIG_SETTINGS))
-    {
-        settings_load();
-    }
-
-    struct bt_le_adv_param advParam = {
-        .id = BT_ID_DEFAULT,
-        .sid = 0,
-        .secondary_max_skip = 0,
-        .options = (BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_USE_NAME),
-        .interval_min = (BT_GAP_ADV_FAST_INT_MIN_1),
-        .interval_max = (BT_GAP_ADV_FAST_INT_MAX_1),
-        .peer = NULL,
-    };
-
-    if (GetBondAddr())
-    { //	ADV_DIRECT_IND
-        printk("start direct adv\n");
-        advParam.options = (BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_USE_NAME | BT_LE_ADV_OPT_DIR_MODE_LOW_DUTY);
-        advParam.peer = &bondAddr;
-    }
-    else
-    {
-        printk("start normal adv\n");
-    }
-
-    err = bt_le_adv_start(&advParam, ad, ARRAY_SIZE(ad), NULL, 0);
-    if (err)
-    {
-        printk("Advertising failed to start (err %d)\n", err);
-        return;
-    }
-
-    printk("Advertising successfully started\n");
-}
 
 static void auth_cancel(struct bt_conn *conn)
 {
@@ -222,6 +174,59 @@ static struct bt_conn_auth_info_cb auth_info_callbacks =
         .pairing_failed = pairing_failed,
 };
 
+
+static void bt_ready(int err)
+{
+    if (err)
+    {
+        printk("Bluetooth init failed (err %d)\n", err);
+        return;
+    }
+
+    printk("Bluetooth initialized\n");
+
+    hog_init();
+
+    // not-- smp
+    if (IS_ENABLED(CONFIG_SETTINGS))
+    {
+        settings_load();
+    }
+
+    struct bt_le_adv_param advParam = {
+        .id = BT_ID_DEFAULT,
+        .sid = 0,
+        .secondary_max_skip = 0,
+        .options = (BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_USE_NAME),
+        .interval_min = (BT_GAP_ADV_FAST_INT_MIN_1),
+        .interval_max = (BT_GAP_ADV_FAST_INT_MAX_1),
+        .peer = NULL,
+    };
+
+    if (GetBondAddr())
+    { //	directed advertising
+        printk("start direct adv\n");
+        advParam.options = (BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_USE_NAME | BT_LE_ADV_OPT_DIR_MODE_LOW_DUTY);
+        if (!dirAdvHighDuty)
+            advParam.options |= BT_LE_ADV_OPT_DIR_MODE_LOW_DUTY;
+
+        advParam.peer = &bondAddr;
+    }
+    else
+    {
+        printk("start normal adv\n");
+    }
+
+    err = bt_le_adv_start(&advParam, ad, ARRAY_SIZE(ad), NULL, 0);
+    if (err)
+    {
+        printk("Advertising failed to start (err %d)\n", err);
+        return;
+    }
+
+    printk("Advertising successfully started\n");
+}
+
 //------------------end of ble------------------------
 void BleAgent_Init(void)
 {
@@ -257,17 +262,5 @@ void BleAgent_Unbond(void)
     int ret = bt_unpair(BT_ID_DEFAULT, BT_ADDR_LE_ANY);
     printk("Attempting to unpair device %d\n", ret);
 
-    int err;
-    err = bt_disable();
-    if (err)
-    {
-        printk("Buetooth disable failed (err %d)\n", err);
-        return;
-    }
-    err = bt_enable(bt_ready);
-    if (err)
-    {
-        printk("Bluetooth init failed (err %d)\n", err);
-        return;
-    }
+    BleRestart();
 }
