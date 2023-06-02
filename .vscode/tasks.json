@@ -6,12 +6,12 @@
         {
             "label": "zephyr build",
             "type": "shell",
-            "command": "west build -b nrf52840_mdk_usb_dongle ."
+            "command": "west build -DBOARD_ROOT=. -b nrf52840_mdk_usb_dongle ."
         },
         {
             "label": "zephyr build always",
             "type": "shell",
-            "command": "west build -p always -b nrf52840_mdk_usb_dongle ."
+            "command": "west build -p always -DBOARD_ROOT=. -b nrf52840_mdk_usb_dongle ."
         }
     ]
 }

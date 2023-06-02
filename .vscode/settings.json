@@ -17,7 +17,12 @@
         "conn.h": "c",
         "cl_common.h": "c",
         "stdbool.h": "c",
-        "ble_agent.h": "c"
+        "ble_agent.h": "c",
+        "hog.h": "c",
+        "xutility": "c",
+        "device.h": "c",
+        "usbd.h": "c",
+        "reboot.h": "c"
     },
     "files.exclude": {
         "**/.git": true,

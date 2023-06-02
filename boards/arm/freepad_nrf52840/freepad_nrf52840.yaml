@@ -1,0 +1,16 @@
+identifier: freepad_nrf52840
+name: freepad-nRF52840
+type: mcu
+arch: arm
+ram: 256
+flash: 1024
+toolchain:
+  - zephyr
+  - gnuarmemb
+  - xtools
+supported:
+  - usb_device
+  - usb_cdc
+  - ble
+  - watchdog
+  - counter

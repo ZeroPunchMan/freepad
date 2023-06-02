@@ -285,7 +285,7 @@ void hog_loop(void)
 			else
 				xosReport.button[0] = 0x08;
 
-			printk("notify %u\n", GetSysTime() / 1000);
+			printk("notify %u\r\n", GetSysTime() / 1000);
 			bt_gatt_notify(NULL, &hog_svc.attrs[5],
 						   inputReportData, sizeof(inputReportData));
 		}

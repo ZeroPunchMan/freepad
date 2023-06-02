@@ -9,6 +9,7 @@
 #include <zephyr/usb/usb_device.h>
 #include <zephyr/usb/usbd.h>
 #include <zephyr/drivers/uart.h>
+#include <zephyr/sys/reboot.h>
 #include "systime.h"
 
 #include <zephyr/types.h>
@@ -74,27 +75,55 @@ void ButtonInit(void)
 }
 
 //------------------end of button-------------------------
+const struct device *uart = DEVICE_DT_GET(DT_NODELABEL(uart0));
 
-BUILD_ASSERT(DT_NODE_HAS_COMPAT(DT_CHOSEN(zephyr_console), zephyr_cdc_acm_uart),
-			 "Console device is not ACM CDC UART device");
+// #define RECEIVE_BUFF_SIZE 10
+// #define RECEIVE_TIMEOUT 100
+
+// static uint8_t rx_buf[RECEIVE_BUFF_SIZE] = {0};
+// static void uart_cb(const struct device *dev, struct uart_event *evt, void *user_data)
+// {
+// 	switch (evt->type)
+// 	{
+
+// 	case UART_RX_RDY:
+// 		printk("uart rx rdy\r\n");
+// 		sys_reboot(SYS_REBOOT_WARM);
+// 		break;
+// 	case UART_RX_DISABLED:
+// 		uart_rx_enable(dev, rx_buf, sizeof rx_buf, RECEIVE_TIMEOUT);
+// 		printk("uart rx disable\r\n");
+// 		break;
+
+// 	default:
+// 		break;
+// 	}
+// }
 
 void main(void)
 {
 	ButtonInit();
 
-	// const struct device *const dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_console));
-	// uint32_t dtr = 0;
-
-	if (usb_enable(NULL))
+	if (!device_is_ready(uart))
 	{
+		printk("UART device not ready\r\n");
 		return;
 	}
 
-	/* Poll if the DTR flag was set */
-	// while (!dtr) {
-	// 	uart_line_ctrl_get(dev, UART_LINE_CTRL_DTR, &dtr);
-	// 	/* Give CPU resources to low priority threads. */
-	// 	k_sleep(K_MSEC(100));
+	// int ret = uart_callback_set(uart, uart_cb, NULL);
+	// if (ret)
+	// {
+	// 	return;
+	// }
+
+	// ret = uart_rx_enable(uart ,rx_buf,sizeof rx_buf,RECEIVE_TIMEOUT);
+	// if (ret) {
+	// 	return;
+	// }
+
+	// if (usb_enable(NULL))
+	// {
+	// 	return;
 	// }
 
 	while (1)
@@ -104,6 +133,12 @@ void main(void)
 		{
 			lastTime = GetSysTime();
 			// printk("Hello World! %u\n", GetSysTime() / 1000);
+
+			// ret = uart_tx(uart, tx_buf, sizeof(tx_buf), SYS_FOREVER_MS);
+			// if (ret)
+			// {
+			// 	return;
+			// }
 		}
 		static int step = 0;
 

@@ -11,7 +11,15 @@
 #include "hog.h"
 #include "systime.h"
 
+typedef enum
+{
+    BleAgent_NotReady,
+    BleAgent_Idle,
+    BleAgent_Advertising,
+    BleAgent_Connected,
+} BleAgentStatus_t;
 
+static BleAgentStatus_t bleAgentStatus = BleAgent_NotReady;
 
 //***********************ble*********************************
 static const struct bt_data ad[] = {
@@ -24,28 +32,11 @@ static const struct bt_data ad[] = {
 };
 //
 static void bt_ready(int err);
+static void BleAdvStart(void);
+static void BleAdvRestart(void);
 
 static bool dirAdvHighDuty = true;
-static void BleRestart(void)
-{
-    int err;
-    err = bt_disable();
-    if (err)
-    {
-        printk("Buetooth disable failed (err %d)\n", err);
-        return;
-    }
-    err = bt_enable(bt_ready);
-    if (err)
-    {
-        printk("Bluetooth init failed (err %d)\n", err);
-        return;
-    }
-}
-
-
-
-static void bt_ready(int err);
+static bool advNeedRestart = false;
 
 static bt_addr_le_t bondAddr;
 static volatile bool deviceBond = false;
@@ -55,14 +46,14 @@ void EnumOnBond(const struct bt_bond_info *info,
     bondAddr = info->addr;
     deviceBond = true;
 
-    printk("bond: %02x:%02x:%02x:%02x:%02x:%02x--%d",
-    	   info->addr.a.val[0],
-    	   info->addr.a.val[1],
-    	   info->addr.a.val[2],
-    	   info->addr.a.val[3],
-    	   info->addr.a.val[4],
-    	   info->addr.a.val[5],
-    	   info->addr.type);
+    printk("bond: %02x:%02x:%02x:%02x:%02x:%02x--%d\r\n",
+           info->addr.a.val[0],
+           info->addr.a.val[1],
+           info->addr.a.val[2],
+           info->addr.a.val[3],
+           info->addr.a.val[4],
+           info->addr.a.val[5],
+           info->addr.type);
 }
 
 static bool GetBondAddr(void)
@@ -82,27 +73,44 @@ static void OnBleConnected(struct bt_conn *conn, uint8_t err)
     {
         printk("Failed to connect to %s (%u)\n", addr, err);
 
-        //directed advertising timeout
+        // directed advertising timeout
         dirAdvHighDuty = false;
-        BleRestart();
+
+        bleAgentStatus = BleAgent_Idle;
     }
     else
     {
         printk("Connected %s\n", addr);
+        bleAgentStatus = BleAgent_Connected;
     }
-
 }
 
 static void OnBledisconnected(struct bt_conn *conn, uint8_t reason)
 {
     char addr[BT_ADDR_LE_STR_LEN];
 
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
+    const bt_addr_le_t *peer = bt_conn_get_dst(conn);
+    bt_addr_le_to_str(peer, addr, sizeof(addr));
 
     printk("Disconnected from %s (reason 0x%02x)\n", addr, reason);
 
+    bool fakeDisconn = true;
+    for (int i = 0; i < 6; i++)
+    {
+        if (peer->a.val[i] != 0xff)
+            fakeDisconn = false;
+    }
+
     dirAdvHighDuty = true;
-    BleRestart();
+    if (!fakeDisconn)
+    {
+        bleAgentStatus = BleAgent_Advertising;
+        advNeedRestart = true;
+    }
+    else
+    {
+        bleAgentStatus = BleAgent_NotReady;
+    }
 }
 
 static void security_changed(struct bt_conn *conn, bt_security_t level,
@@ -126,7 +134,7 @@ static void security_changed(struct bt_conn *conn, bt_security_t level,
 BT_CONN_CB_DEFINE(conn_callbacks) = {
     .connected = OnBleConnected,
     .disconnected = OnBledisconnected,
-    .security_changed = security_changed, 
+    .security_changed = security_changed,
 };
 
 static void auth_cancel(struct bt_conn *conn)
@@ -169,7 +177,6 @@ static struct bt_conn_auth_info_cb auth_info_callbacks =
         .pairing_failed = pairing_failed,
 };
 
-
 static void bt_ready(int err)
 {
     if (err)
@@ -187,38 +194,8 @@ static void bt_ready(int err)
         settings_load();
     }
 
-    struct bt_le_adv_param advParam = {
-        .id = BT_ID_DEFAULT,
-        .sid = 0,
-        .secondary_max_skip = 0,
-        .options = (BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_USE_NAME),
-        .interval_min = (BT_GAP_ADV_FAST_INT_MIN_1),
-        .interval_max = (BT_GAP_ADV_FAST_INT_MAX_1),
-        .peer = NULL,
-    };
-
-    if (GetBondAddr())
-    { //	directed advertising
-        printk("start direct adv\n");
-        advParam.options = (BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_USE_NAME | BT_LE_ADV_OPT_DIR_MODE_LOW_DUTY);
-        if (!dirAdvHighDuty)
-            advParam.options |= BT_LE_ADV_OPT_DIR_MODE_LOW_DUTY;
-
-        advParam.peer = &bondAddr;
-    }
-    else
-    {
-        printk("start normal adv\n");
-    }
-
-    err = bt_le_adv_start(&advParam, ad, ARRAY_SIZE(ad), NULL, 0);
-    if (err)
-    {
-        printk("Advertising failed to start (err %d)\n", err);
-        return;
-    }
-
-    printk("Advertising successfully started\n");
+    BleAdvStart();
+    bleAgentStatus = BleAgent_Advertising;
 }
 
 //------------------end of ble------------------------
@@ -249,12 +226,84 @@ void BleAgent_Process(void)
     {
         lastTime = GetSysTime();
     }
+
+    switch (bleAgentStatus)
+    {
+    case BleAgent_Idle:
+        BleAdvStart();
+        bleAgentStatus = BleAgent_Advertising;
+        break;
+    case BleAgent_Advertising:
+        if (advNeedRestart)
+        {
+            advNeedRestart = false;
+            BleAdvRestart();
+        }
+        break;
+    default:
+        break;
+    }
+}
+
+static void BleAdvStart(void)
+{
+    struct bt_le_adv_param advParam = {
+        .id = BT_ID_DEFAULT,
+        .sid = 0,
+        .secondary_max_skip = 0,
+        .options = (BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_USE_NAME),
+        .interval_min = (BT_GAP_ADV_FAST_INT_MIN_1),
+        .interval_max = (BT_GAP_ADV_FAST_INT_MAX_1),
+        .peer = NULL,
+    };
+
+    if (GetBondAddr())
+    { //	directed advertising
+        advParam.options = (BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_USE_NAME);
+        if (!dirAdvHighDuty)
+            advParam.options |= BT_LE_ADV_OPT_DIR_MODE_LOW_DUTY;
+
+        advParam.peer = &bondAddr;
+        if(advParam.options & BT_LE_ADV_OPT_DIR_MODE_LOW_DUTY)
+            printk("start low duty direct adv\n");
+        else
+            printk("start high duty direct adv\n");
+    }
+    else
+    {
+        printk("start normal adv\n");
+    }
+
+    int err = bt_le_adv_start(&advParam, ad, ARRAY_SIZE(ad), NULL, 0);
+    if (err)
+    {
+        printk("Advertising failed to start (err %d)\n", err);
+        return;
+    }
+}
+
+static void BleAdvRestart(void)
+{
+    int err = bt_le_adv_stop();
+    if (err)
+    {
+        printk("Advertising failed to start (err %d)\n", err);
+        return;
+    }
+
+    BleAdvStart();
 }
 
 void BleAgent_Unbond(void)
 {
+    static uint32_t lastTime = 0;
+    if (SysTimeSpan(lastTime) < 1000)
+        return;
+
+    lastTime = GetSysTime();
+
     int ret = bt_unpair(BT_ID_DEFAULT, BT_ADDR_LE_ANY);
     printk("Attempting to unpair device %d\n", ret);
 
-    BleRestart();
+    advNeedRestart = true;
 }
