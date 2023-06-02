@@ -236,6 +236,14 @@ B[2]
 reserved
 ```
 
+## COMMANDS
+```
+b: start ble
+u: ble unbond
+d: stop iwdg
+r: software reset
+```
+
 ## todos
 1.bonds & direct adv -- ok
 2.logging

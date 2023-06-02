@@ -23,6 +23,7 @@
 
 #include "hog.h"
 #include "ble_agent.h"
+#include "iwdg.h"
 
 //*****************button***********************
 #define BTN1_NODE DT_PATH(buttons, func_button)
@@ -105,8 +106,6 @@ static void uart_cb(const struct device *dev, struct uart_event *evt, void *user
 
 void main(void)
 {
-	ButtonInit();
-
 	if (!device_is_ready(uart))
 	{
 		printk("UART device not ready\r\n");
@@ -124,7 +123,9 @@ void main(void)
 	{
 		return;
 	}
-
+	
+	ButtonInit();
+	IwdgInit();
 	// if (usb_enable(NULL))
 	// {
 	// 	return;
@@ -137,15 +138,10 @@ void main(void)
 		{
 			lastTime = GetSysTime();
 			// printk("Hello World! %u\n", GetSysTime() / 1000);
-
-			// ret = uart_tx(uart, tx_buf, sizeof(tx_buf), SYS_FOREVER_MS);
-			// if (ret)
-			// {
-			// 	return;
-			// }
 		}
 
 		BleAgent_Process();
+		IwdgProcess();
 
 		if (buttonPress)
 		{
@@ -162,7 +158,8 @@ void main(void)
 			case 'u':
 				BleAgent_Unbond();
 				break;
-			case 'd': // todo DFU by WDG reset
+			case 'd': //DFU by WDG reset
+				IwdgDontFeed();
 				break;
 			case 'r':
 				sys_reboot(SYS_REBOOT_WARM); // just reset
