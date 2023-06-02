@@ -35,6 +35,7 @@ static void bt_ready(int err);
 static void BleAdvStart(void);
 static void BleAdvRestart(void);
 
+static volatile bool initialized = false;
 static bool dirAdvHighDuty = true;
 static bool advNeedRestart = false;
 
@@ -47,12 +48,12 @@ void EnumOnBond(const struct bt_bond_info *info,
     deviceBond = true;
 
     printk("bond: %02x:%02x:%02x:%02x:%02x:%02x--%d\r\n",
-           info->addr.a.val[0],
-           info->addr.a.val[1],
-           info->addr.a.val[2],
-           info->addr.a.val[3],
-           info->addr.a.val[4],
            info->addr.a.val[5],
+           info->addr.a.val[4],
+           info->addr.a.val[3],
+           info->addr.a.val[2],
+           info->addr.a.val[1],
+           info->addr.a.val[0],
            info->addr.type);
 }
 
@@ -201,6 +202,8 @@ static void bt_ready(int err)
 //------------------end of ble------------------------
 void BleAgent_Init(void)
 {
+    if (initialized)
+        return;
     //****************ble*********************
     int err;
 
@@ -215,10 +218,15 @@ void BleAgent_Init(void)
     bt_conn_auth_info_cb_register(&auth_info_callbacks);
     //------------------------------------
     printk("Bluetooth init done\n");
+
+    initialized = true;
 }
 
 void BleAgent_Process(void)
 {
+    if (!initialized)
+        return;
+
     hog_loop();
 
     static uint32_t lastTime = 0;
@@ -264,7 +272,7 @@ static void BleAdvStart(void)
             advParam.options |= BT_LE_ADV_OPT_DIR_MODE_LOW_DUTY;
 
         advParam.peer = &bondAddr;
-        if(advParam.options & BT_LE_ADV_OPT_DIR_MODE_LOW_DUTY)
+        if (advParam.options & BT_LE_ADV_OPT_DIR_MODE_LOW_DUTY)
             printk("start low duty direct adv\n");
         else
             printk("start high duty direct adv\n");
@@ -296,6 +304,9 @@ static void BleAdvRestart(void)
 
 void BleAgent_Unbond(void)
 {
+    if (!initialized)
+        return;
+
     static uint32_t lastTime = 0;
     if (SysTimeSpan(lastTime) < 1000)
         return;

@@ -25,7 +25,7 @@
 #include "ble_agent.h"
 
 //*****************button***********************
-#define BTN1_NODE DT_PATH(buttons, unpair_button)
+#define BTN1_NODE DT_PATH(buttons, func_button)
 #if !DT_NODE_HAS_STATUS(BTN1_NODE, okay)
 #error "button not set"
 #endif
@@ -76,29 +76,32 @@ void ButtonInit(void)
 
 //------------------end of button-------------------------
 const struct device *uart = DEVICE_DT_GET(DT_NODELABEL(uart0));
+volatile static uint8_t cmd = 0;
 
-// #define RECEIVE_BUFF_SIZE 10
-// #define RECEIVE_TIMEOUT 100
+#define RECEIVE_BUFF_SIZE 10
+#define RECEIVE_TIMEOUT 100
 
-// static uint8_t rx_buf[RECEIVE_BUFF_SIZE] = {0};
-// static void uart_cb(const struct device *dev, struct uart_event *evt, void *user_data)
-// {
-// 	switch (evt->type)
-// 	{
+static uint8_t rx_buf[RECEIVE_BUFF_SIZE] = {0};
+static void uart_cb(const struct device *dev, struct uart_event *evt, void *user_data)
+{
+	switch (evt->type)
+	{
 
-// 	case UART_RX_RDY:
-// 		printk("uart rx rdy\r\n");
-// 		sys_reboot(SYS_REBOOT_WARM);
-// 		break;
-// 	case UART_RX_DISABLED:
-// 		uart_rx_enable(dev, rx_buf, sizeof rx_buf, RECEIVE_TIMEOUT);
-// 		printk("uart rx disable\r\n");
-// 		break;
+	case UART_RX_RDY:
+		uint8_t c = evt->data.rx.buf[evt->data.rx.offset];
+		printk("uart rx rdy: %02x\r\n", c);
+		cmd = c;
+		// sys_reboot(SYS_REBOOT_WARM);
+		break;
+	case UART_RX_DISABLED:
+		uart_rx_enable(dev, rx_buf, sizeof rx_buf, RECEIVE_TIMEOUT);
+		printk("uart rx disable\r\n");
+		break;
 
-// 	default:
-// 		break;
-// 	}
-// }
+	default:
+		break;
+	}
+}
 
 void main(void)
 {
@@ -110,16 +113,17 @@ void main(void)
 		return;
 	}
 
-	// int ret = uart_callback_set(uart, uart_cb, NULL);
-	// if (ret)
-	// {
-	// 	return;
-	// }
+	int ret = uart_callback_set(uart, uart_cb, NULL);
+	if (ret)
+	{
+		return;
+	}
 
-	// ret = uart_rx_enable(uart ,rx_buf,sizeof rx_buf,RECEIVE_TIMEOUT);
-	// if (ret) {
-	// 	return;
-	// }
+	ret = uart_rx_enable(uart, rx_buf, sizeof rx_buf, RECEIVE_TIMEOUT);
+	if (ret)
+	{
+		return;
+	}
 
 	// if (usb_enable(NULL))
 	// {
@@ -140,27 +144,34 @@ void main(void)
 			// 	return;
 			// }
 		}
-		static int step = 0;
 
-		if (step == 1)
-			BleAgent_Process();
+		BleAgent_Process();
 
 		if (buttonPress)
 		{
 			buttonPress = false;
+		}
 
-			switch (step)
+		if (cmd != 0)
+		{
+			switch (cmd)
 			{
-			case 0:
+			case 'b':
 				BleAgent_Init();
-				step = 1;
 				break;
-			case 1:
+			case 'u':
 				BleAgent_Unbond();
+				break;
+			case 'd': // todo DFU by WDG reset
+				break;
+			case 'r':
+				sys_reboot(SYS_REBOOT_WARM); // just reset
 				break;
 			default:
 				break;
 			}
+
+			cmd = 0;
 		}
 
 		k_sleep(K_MSEC(1));
