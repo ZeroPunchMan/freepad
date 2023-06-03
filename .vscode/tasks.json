@@ -6,12 +6,12 @@
         {
             "label": "zephyr build",
             "type": "shell",
-            "command": "west build -DBOARD_ROOT=. -b nrf52840_mdk_usb_dongle ."
+            "command": "west build -b freepad_nrf52840 . -DBOARD_ROOT=${workspaceFolder}"
         },
         {
             "label": "zephyr build always",
             "type": "shell",
-            "command": "west build -p always -DBOARD_ROOT=. -b nrf52840_mdk_usb_dongle ."
+            "command": "west build -p always -b freepad_nrf52840 . -DBOARD_ROOT=${workspaceFolder}"
         }
     ]
 }

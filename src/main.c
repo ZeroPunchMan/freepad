@@ -24,6 +24,7 @@
 #include "hog.h"
 #include "ble_agent.h"
 #include "iwdg.h"
+#include <zephyr/sys/reboot.h>
 
 //*****************button***********************
 #define BTN1_NODE DT_PATH(buttons, func_button)
@@ -137,7 +138,9 @@ void main(void)
 		if (SysTimeSpan(lastTime) >= 1000)
 		{
 			lastTime = GetSysTime();
-			// printk("Hello World! %u\n", GetSysTime() / 1000);
+
+			// uint32_t resetReason = *((volatile uint32_t*)(0x40000000 +  0x400));
+			// printk("Hello World! %u\n", resetReason);
 		}
 
 		BleAgent_Process();
@@ -162,6 +165,7 @@ void main(void)
 				IwdgDontFeed();
 				break;
 			case 'r':
+				IwdgForceFeed();
 				sys_reboot(SYS_REBOOT_WARM); // just reset
 				break;
 			default:

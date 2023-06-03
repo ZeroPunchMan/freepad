@@ -6,6 +6,8 @@
 #include <stdbool.h>
 #include "systime.h"
 
+volatile static bool initialized = false;
+
 static bool feed = true;
 static int wdt_channel_id;
 const static struct device *const wdt = DEVICE_DT_GET(DT_ALIAS(watchdog0));
@@ -24,7 +26,7 @@ void IwdgInit(void)
 
         /* Expire watchdog after max window */
         .window.min = 0,
-        .window.max = 3000,
+        .window.max = 3500,
         .callback = NULL,
     };
 
@@ -41,12 +43,17 @@ void IwdgInit(void)
         printk("Watchdog setup error\n");
         return;
     }
+
+    initialized = true;
 }
 
 void IwdgProcess(void)
 {
+    if (!initialized)
+        return;
+
     static uint32_t lastTime = 0;
-    if (SysTimeSpan(lastTime) >= 2000)
+    if (SysTimeSpan(lastTime) >= 1000)
     {
         lastTime = GetSysTime();
         if (feed)
@@ -60,4 +67,12 @@ void IwdgProcess(void)
 void IwdgDontFeed(void)
 {
     feed = false;
+}
+
+void IwdgForceFeed(void)
+{
+    if (!initialized)
+        return;
+
+    wdt_feed(wdt, wdt_channel_id);
 }
