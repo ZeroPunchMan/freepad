@@ -4,8 +4,8 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
-                // "D:/sdk/ncs/zephyr/include"
-                "${workspaceFolder}/../zephyr/include"
+                "D:/sdk/ncs/zephyr/include",
+                "${workspaceFolder}/src/ble"
             ],
             "defines": [
                 "_DEBUG",
@@ -19,8 +19,7 @@
             "intelliSenseMode": "windows-msvc-x64",
             "browse": {
                 "path": [
-                    // "D:\\sdk\\ncs\\zephyr"
-                    "${workspaceFolder}/../zephyr"
+                    "D:\\sdk\\ncs\\zephyr"
                 ]
             }
         }

@@ -247,8 +247,16 @@ r: software reset
 ## todos
 1.bonds & direct adv -- ok
 2.logging
-3.settings subsystem
-4.usb subsystem
-5.boards
-6.boards low energy
-7.mcuboot
+3.settings subsystem  -- suspend
+4.custom button
+5.usb subsystem
+6.boards
+7.boards low energy
+8.mcuboot
+
+## board
+DC-DC:
+magnet: sensor
+D-Pad: taobao
+Button: 
+Stick:
