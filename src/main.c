@@ -25,58 +25,9 @@
 #include "ble_agent.h"
 #include "iwdg.h"
 #include <zephyr/sys/reboot.h>
+#include "button.h"
+#include "func_button.h"
 
-//*****************button***********************
-#define BTN1_NODE DT_PATH(buttons, func_button)
-#if !DT_NODE_HAS_STATUS(BTN1_NODE, okay)
-#error "button not set"
-#endif
-
-static const struct gpio_dt_spec button = GPIO_DT_SPEC_GET_OR(BTN1_NODE, gpios,
-															  {0});
-static struct gpio_callback button_cb_data;
-
-static bool buttonPress = false;
-void button_pressed(const struct device *dev, struct gpio_callback *cb,
-					uint32_t pins)
-{
-	printk("Button pressed at %" PRIu32 "\n", k_cycle_get_32());
-
-	buttonPress = true;
-}
-
-void ButtonInit(void)
-{
-	if (!gpio_is_ready_dt(&button))
-	{
-		printk("Error: button device %s is not ready\n",
-			   button.port->name);
-		return;
-	}
-
-	int ret = gpio_pin_configure_dt(&button, GPIO_INPUT);
-	if (ret != 0)
-	{
-		printk("Error %d: failed to configure %s pin %d\n",
-			   ret, button.port->name, button.pin);
-		return;
-	}
-
-	ret = gpio_pin_interrupt_configure_dt(&button,
-										  GPIO_INT_EDGE_TO_ACTIVE);
-	if (ret != 0)
-	{
-		printk("Error %d: failed to configure interrupt on %s pin %d\n",
-			   ret, button.port->name, button.pin);
-		return;
-	}
-
-	gpio_init_callback(&button_cb_data, button_pressed, BIT(button.pin));
-	gpio_add_callback(button.port, &button_cb_data);
-	printk("Set up button at %s pin %d\n", button.port->name, button.pin);
-}
-
-//------------------end of button-------------------------
 const struct device *uart = DEVICE_DT_GET(DT_NODELABEL(uart0));
 volatile static uint8_t cmd = 0;
 
@@ -105,6 +56,20 @@ static void uart_cb(const struct device *dev, struct uart_event *evt, void *user
 	}
 }
 
+void MainSetTask(uint8_t c)
+{
+	cmd = c;
+}
+
+void ButtonTimerHandler(struct k_timer *dummy)
+{
+	ARG_UNUSED(dummy);
+	Button_Check(10);
+	FuncButton_Update(10);
+}
+
+K_TIMER_DEFINE(buttonTimer, ButtonTimerHandler, NULL);
+
 void main(void)
 {
 	if (!device_is_ready(uart))
@@ -124,9 +89,12 @@ void main(void)
 	{
 		return;
 	}
-	
-	ButtonInit();
+
 	IwdgInit();
+	Button_Init();
+	// FuncButton_Init();
+
+	k_timer_start(&buttonTimer, K_MSEC(10), K_MSEC(10));
 	// if (usb_enable(NULL))
 	// {
 	// 	return;
@@ -146,11 +114,6 @@ void main(void)
 		BleAgent_Process();
 		IwdgProcess();
 
-		if (buttonPress)
-		{
-			buttonPress = false;
-		}
-
 		if (cmd != 0)
 		{
 			switch (cmd)
@@ -159,14 +122,16 @@ void main(void)
 				BleAgent_Init();
 				break;
 			case 'u':
-				BleAgent_Unbond();
+				// BleAgent_Unbond();
+				printk("unbond\r\n");
 				break;
-			case 'd': //DFU by WDG reset
+			case 'd': // DFU by WDG reset
 				IwdgDontFeed();
 				break;
 			case 'r':
-				IwdgForceFeed();
-				sys_reboot(SYS_REBOOT_WARM); // just reset
+				printk("reset\r\n");
+				// IwdgForceFeed();
+				// sys_reboot(SYS_REBOOT_WARM); // just reset
 				break;
 			default:
 				break;

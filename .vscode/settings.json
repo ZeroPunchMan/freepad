@@ -22,7 +22,17 @@
         "xutility": "c",
         "device.h": "c",
         "usbd.h": "c",
-        "reboot.h": "c"
+        "reboot.h": "c",
+        "system_error": "c",
+        "xlocale": "c",
+        "button.h": "c",
+        "kernel.h": "c",
+        "stdint.h": "c",
+        "locale": "c",
+        "xlocmes": "c",
+        "xlocmon": "c",
+        "xlocnum": "c",
+        "xloctime": "c"
     },
     "files.exclude": {
         "**/.git": true,
@@ -37,5 +47,8 @@
         "clib/.gitignore":true,
         "clib/Makefile":true,
 
-    }
+    },
+    "nrf-connect.boardRoots": [
+        "\\study\\freepad"
+    ]
 }

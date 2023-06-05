@@ -8,14 +8,6 @@
 	chosen {
 		zephyr,console = &uart0;
 	};
-
-	
-	buttons {
-		func_button {
-			gpios = <&gpio1 6 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
-			label = "unpair button";
-		};
-	};
 };
 
 
