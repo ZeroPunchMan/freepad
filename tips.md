@@ -2,6 +2,7 @@
 ## zephyr
 ```
 1. keys binding: dts\bindings\input\gpio-keys.yaml
+2. pwm driver: .dst->&pwm0 
 ```
 
 ## ble
