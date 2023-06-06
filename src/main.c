@@ -27,6 +27,7 @@
 #include <zephyr/sys/reboot.h>
 #include "button.h"
 #include "func_button.h"
+#include <zephyr/drivers/pwm.h>
 
 const struct device *uart = DEVICE_DT_GET(DT_NODELABEL(uart0));
 volatile static uint8_t cmd = 0;
@@ -70,8 +71,28 @@ void ButtonTimerHandler(struct k_timer *dummy)
 
 K_TIMER_DEFINE(buttonTimer, ButtonTimerHandler, NULL);
 
+//**************pwm****************
+static const struct pwm_dt_spec pwm_led0 = PWM_DT_SPEC_GET(DT_ALIAS(pwm_led0));
+
+void PwmInit(void)
+{
+	if (!device_is_ready(pwm_led0.dev))
+	{
+		printk("Error: PWM device %s is not ready\n",
+			   pwm_led0.dev->name);
+		return;
+	}
+
+	uint32_t max_period = PWM_SEC(1U) / 128U;
+	pwm_set_dt(&pwm_led0, max_period, max_period / 2U);
+}
+
+//-------------pwm------------------
+
 void main(void)
 {
+	PwmInit();
+
 	if (!device_is_ready(uart))
 	{
 		printk("UART device not ready\r\n");
@@ -103,10 +124,21 @@ void main(void)
 	while (1)
 	{
 		static uint32_t lastTime = 0;
-		if (SysTimeSpan(lastTime) >= 1000)
+		if (SysTimeSpan(lastTime) >= 10)
 		{
 			lastTime = GetSysTime();
 
+			static uint32_t duty = 0;
+			static bool inc = true;
+			uint32_t max_period = PWM_SEC(1U) / 128U;
+			uint32_t period = max_period / 200 * duty;
+			pwm_set_dt(&pwm_led0, max_period, period);
+
+			inc ? duty++ : duty--;
+			if (duty >= 200)
+				inc = false;
+			if (duty == 0)
+				inc = true;
 			// uint32_t resetReason = *((volatile uint32_t*)(0x40000000 +  0x400));
 			// printk("Hello World! %u\n", resetReason);
 		}

@@ -32,7 +32,8 @@
         "xlocmes": "c",
         "xlocmon": "c",
         "xlocnum": "c",
-        "xloctime": "c"
+        "xloctime": "c",
+        "pwm.h": "c"
     },
     "files.exclude": {
         "**/.git": true,
@@ -50,5 +51,6 @@
     },
     "nrf-connect.boardRoots": [
         "\\study\\freepad"
-    ]
+    ],
+    "workbench.editor.enablePreview": false
 }

@@ -26,35 +26,6 @@
 		zephyr,ieee802154 = &ieee802154;
 	};
 
-	leds {
-		compatible = "gpio-leds";
-		led0_red: led_0 {
-			gpios = <&gpio0 23 GPIO_ACTIVE_LOW>;
-			label = "Red LED 0";
-		};
-		led0_green: led_1 {
-			gpios = <&gpio0 22 GPIO_ACTIVE_LOW>;
-			label = "Green LED 0";
-		};
-		led0_blue: led_2 {
-			gpios = <&gpio0 24 GPIO_ACTIVE_LOW>;
-			label = "Blue LED 0";
-		};
-	};
-
-	pwmleds {
-		compatible = "pwm-leds";
-		red_pwm_led: pwm_led_0 {
-			pwms = <&pwm0 0 PWM_MSEC(20) PWM_POLARITY_INVERTED>;
-		};
-		green_pwm_led: pwm_led_1 {
-			pwms = <&pwm0 1 PWM_MSEC(20) PWM_POLARITY_INVERTED>;
-		};
-		blue_pwm_led: pwm_led_2 {
-			pwms = <&pwm0 2 PWM_MSEC(20) PWM_POLARITY_INVERTED>;
-		};
-	};
-
 	buttons {
 		compatible = "gpio-keys";
 		func_button {
@@ -63,21 +34,17 @@
 		};
 	};
 
+	pwmleds {
+		compatible = "pwm-leds";
+		pwm_led0: pwm_led_0 {
+			pwms = <&pwm0 0 PWM_MSEC(20) PWM_POLARITY_INVERTED>;
+		};
+	};
+
 	/* These aliases are provided for compatibility with samples */
 	aliases {
-		led0 = &led0_red;
-		led1 = &led0_green;
-		led2 = &led0_blue;
-		led0-red   = &led0_red;
-		led0-green = &led0_green;
-		led0-blue  = &led0_blue;
-		pwm-led0 = &red_pwm_led;
-		pwm-led1 = &green_pwm_led;
-		pwm-led2 = &blue_pwm_led;
-		red-pwm-led = &red_pwm_led;
-		green-pwm-led = &green_pwm_led;
-		blue-pwm-led = &blue_pwm_led;
 		watchdog0 = &wdt0;
+		pwm-led0 = &pwm_led0;
 	};
 };
 
@@ -99,6 +66,13 @@
 	current-speed = <115200>;
 	pinctrl-0 = <&uart0_default>;
 	pinctrl-1 = <&uart0_sleep>;
+	pinctrl-names = "default", "sleep";
+};
+
+&pwm0 {
+	status = "okay";
+	pinctrl-0 = <&pwm0_default>;
+	pinctrl-1 = <&pwm0_sleep>;
 	pinctrl-names = "default", "sleep";
 };
 

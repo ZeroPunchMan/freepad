@@ -249,10 +249,11 @@ r: software reset
 2.logging
 3.settings subsystem  -- suspend
 4.custom button
-5.usb subsystem
-6.boards
-7.boards low energy
-8.mcuboot
+5.pwm led
+6.usb subsystem
+7.boards
+8.boards low energy
+9.mcuboot
 
 ## board
 DC-DC:
