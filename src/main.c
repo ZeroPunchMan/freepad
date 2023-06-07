@@ -28,6 +28,7 @@
 #include "button.h"
 #include "func_button.h"
 #include <zephyr/drivers/pwm.h>
+#include "usb_hid.h"
 
 const struct device *uart = DEVICE_DT_GET(DT_NODELABEL(uart0));
 volatile static uint8_t cmd = 0;
@@ -113,7 +114,8 @@ void main(void)
 
 	IwdgInit();
 	Button_Init();
-	// FuncButton_Init();
+	UsbHid_Init();
+	FuncButton_Init();
 
 	k_timer_start(&buttonTimer, K_MSEC(10), K_MSEC(10));
 	// if (usb_enable(NULL))

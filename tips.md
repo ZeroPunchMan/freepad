@@ -13,3 +13,8 @@
 2.启用加密: 由主机发起,三次握手后生效; 如果要重启加密,则主机发起三次握手停止加密,然后主机再发起加密流程.
 
 ```
+
+## nrf
+```
+1.EasyDMA is a module implemented by some peripherals to gain direct access to Data RAM.
+```
