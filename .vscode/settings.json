@@ -1,5 +1,17 @@
 {
     "nrf-connect.applications": [
         "${workspaceFolder}"
-    ]
+    ],
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true,
+        // "build": true,
+    },
+    "files.associations": {
+        "ring_buffer.h": "c"
+    }
 }
