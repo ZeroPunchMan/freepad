@@ -13,6 +13,31 @@
 		zephyr,flash = &flash0;
 		zephyr,code-partition = &slot0_partition;
 	};
+
+	leds {
+		compatible = "gpio-leds";
+		led0: led_0 {
+			gpios = <&gpio0 13 GPIO_ACTIVE_LOW>;
+			label = "Green LED 0";
+		};
+		led1: led_1 {
+			gpios = <&gpio0 14 GPIO_ACTIVE_LOW>;
+			label = "Green LED 1";
+		};
+		led2: led_2 {
+			gpios = <&gpio0 15 GPIO_ACTIVE_LOW>;
+			label = "Green LED 2";
+		};
+		led3: led_3 {
+			gpios = <&gpio0 16 GPIO_ACTIVE_LOW>;
+			label = "Green LED 3";
+		};
+	};
+
+
+	aliases {
+		led0 = &led0;
+	};
 };
 
 &flash0 {
@@ -42,5 +67,13 @@
 			reg = <0xfa000 0x6000>;
 		};
 	};
+};
+
+&gpio0 {
+	status = "okay";
+};
+
+&gpiote {
+	status = "okay";
 };
 

@@ -87,7 +87,7 @@ static void interrupt_handler(const struct device *dev, void *user_data)
                 else
                 { // 没拉取到数据,关闭发送中断
                     uart_irq_tx_disable(dev);
-                    continue;
+                    break;
                 }
             }
             else
@@ -146,21 +146,21 @@ int UsbAgent_Init(void)
 
     LOG_INF("Wait for DTR");
 
-    while (true)
-    {
-        uint32_t dtr = 0U;
+    // while (true)
+    // {
+    //     uint32_t dtr = 0U;
 
-        uart_line_ctrl_get(uart_dev, UART_LINE_CTRL_DTR, &dtr);
-        if (dtr)
-        {
-            break;
-        }
-        else
-        {
-            /* Give CPU resources to low priority threads. */
-            k_sleep(K_MSEC(100));
-        }
-    }
+    //     uart_line_ctrl_get(uart_dev, UART_LINE_CTRL_DTR, &dtr);
+    //     if (dtr)
+    //     {
+    //         break;
+    //     }
+    //     else
+    //     {
+    //         /* Give CPU resources to low priority threads. */
+    //         k_sleep(K_MSEC(100));
+    //     }
+    // }
 
     LOG_INF("DTR set");
 
