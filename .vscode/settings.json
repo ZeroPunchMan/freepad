@@ -12,6 +12,8 @@
         // "build": true,
     },
     "files.associations": {
-        "ring_buffer.h": "c"
+        "ring_buffer.h": "c",
+        "usb_agent.h": "c",
+        "sample_usbd.h": "c"
     }
 }

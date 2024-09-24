@@ -12,7 +12,8 @@
 // You can also visit the nRF DeviceTree extension documentation at https://docs.nordicsemi.com/bundle/nrf-connect-vscode/page/guides/ncs_configure_app.html#devicetree-support-in-the-extension
 
 
-&zephyr_udc0 {
+&usbd {
+	status = "okay";
 	cdc_acm_uart0 {
 		compatible = "zephyr,cdc-acm-uart";
 	};

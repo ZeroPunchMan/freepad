@@ -1,5 +1,6 @@
 ```
-用app.overlay则默认使用,用其他文件名则要在build配置中添加
+1.用app.overlay则默认使用,用其他文件名则要在build配置中添加
+2.添加文件要重新保存cmakelists,此时FILE(GLOB app_sources src/*.c)会添加新文件
 ```
 
 ```
