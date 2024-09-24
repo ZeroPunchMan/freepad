@@ -28,20 +28,20 @@ LOG_MODULE_REGISTER(cdc_acm_echo, LOG_LEVEL_INF);
 
 const struct device *const uart_dev = DEVICE_DT_GET_ONE(zephyr_cdc_acm_uart);
 
-static uint8_t recvBuffer[1024];
+static uint8_t recvBuffer[10];
 static uint8_t sendBuffer[1024];
 
 static struct ring_buf recvRingBuffer;
 static struct ring_buf sendRingBuffer;
 
 static void interrupt_handler(const struct device *dev, void *user_data)
-{ // thread usbworkq
+{ // thread usbworkq; k_is_in_isr()->false  线程优先级-1,协作式,近似ISR,
     ARG_UNUSED(user_data);
 
     while (uart_irq_update(dev) && uart_irq_is_pending(dev))
     {
         if (uart_irq_rx_ready(dev))
-        {
+        { // 接受中断
             int recv_len;
             uint8_t buffer[64];
             size_t len = MIN(ring_buf_space_get(&recvRingBuffer),
@@ -62,27 +62,32 @@ static void interrupt_handler(const struct device *dev, void *user_data)
         }
 
         if (uart_irq_tx_ready(dev))
-        {
-            uint8_t buffer[64];
-            int rb_len, send_len;
-
-            rb_len = ring_buf_get(&sendRingBuffer, buffer, sizeof(buffer));
-            if (!rb_len)
-            {
-                uart_irq_tx_disable(dev);
-                continue;
+        { // 发送中断
+            static uint8_t sb[64];
+            static int rb_len = 0, send_len = 0;
+            if (send_len >= rb_len)
+            { // 之前数据已经发完,拉新的数据
+                rb_len = ring_buf_get(&sendRingBuffer, sb, sizeof(sb));
+                if (rb_len)
+                { // 拉取到数据,清零已发字节数
+                    send_len = 0;
+                }
+                else
+                { // 没拉取到数据,关闭发送中断
+                    uart_irq_tx_disable(dev);
+                    continue;
+                }
             }
-
-            send_len = uart_fifo_fill(dev, buffer, rb_len);
-            if (send_len < rb_len)
-            { // todo 剩余数据处理
+            else
+            { // send_len < rb_len,还未发完
+                send_len += uart_fifo_fill(dev, sb + send_len, rb_len - send_len);
             }
         }
     }
 }
 
 uint32_t SendData(const uint8_t *data, uint32_t len)
-{ // todo review
+{
     if (!context.init)
         return 0;
     uint32_t sendLen = ring_buf_put(&sendRingBuffer, data, len);
@@ -92,7 +97,7 @@ uint32_t SendData(const uint8_t *data, uint32_t len)
 }
 
 uint32_t RecvData(uint8_t *buffer, uint32_t len)
-{ // todo review
+{
     if (!context.init)
         return 0;
 
