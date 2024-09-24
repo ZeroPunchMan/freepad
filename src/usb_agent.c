@@ -28,7 +28,7 @@ LOG_MODULE_REGISTER(cdc_acm_echo, LOG_LEVEL_INF);
 
 const struct device *const uart_dev = DEVICE_DT_GET_ONE(zephyr_cdc_acm_uart);
 
-static uint8_t recvBuffer[10];
+static uint8_t recvBuffer[1024];
 static uint8_t sendBuffer[1024];
 
 static struct ring_buf recvRingBuffer;
@@ -51,7 +51,7 @@ static void interrupt_handler(const struct device *dev, void *user_data)
             {
                 /* Throttle because ring buffer is full */
                 uart_irq_rx_disable(dev);
-                continue;
+                break;
             }
 
             recv_len = uart_fifo_read(dev, buffer, len);
@@ -65,6 +65,18 @@ static void interrupt_handler(const struct device *dev, void *user_data)
         { // 发送中断
             static uint8_t sb[64];
             static int rb_len = 0, send_len = 0;
+
+            // rb_len = ring_buf_get(&sendRingBuffer, sb, sizeof(sb));
+            // if (rb_len)
+            // {
+            //     send_len = uart_fifo_fill(dev, sb, rb_len);
+            // }
+            // else
+            // {
+            //     uart_irq_tx_disable(dev);
+            //     break;
+            // }
+
             if (send_len >= rb_len)
             { // 之前数据已经发完,拉新的数据
                 rb_len = ring_buf_get(&sendRingBuffer, sb, sizeof(sb));
