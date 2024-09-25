@@ -11,7 +11,7 @@
 	chosen {
 		zephyr,sram = &sram0;
 		zephyr,flash = &flash0;
-		zephyr,code-partition = &slot0_partition;
+		zephyr,code-partition = &boot_partition;
 	};
 
 	leds {
@@ -40,6 +40,7 @@
 	};
 };
 
+
 &flash0 {
 	partitions {
 		compatible = "fixed-partitions";
@@ -47,24 +48,16 @@
 		#size-cells = <1>;
 
 		boot_partition: partition@0 {
-			label = "mcuboot";
-			reg = <0x0 0xc000>;
+			label = "lboot";
+			reg = <0x0 0x25800>;
 		};
-		slot0_partition: partition@c000 {
+		app_partition: partition@25800 {
 			label = "image-0";
-			reg = <0xc000 0x72000>;
+			reg = <0x25800 0x4b000>;
 		};
-		slot1_partition: partition@7e000 {
-			label = "image-1";
-			reg = <0x7e000 0x72000>;
-		};
-		scratch_partition: partition@f0000 {
-			label = "image-scratch";
-			reg = <0xf0000 0xa000>;
-		};
-		storage_partition: partition@fa000 {
+		storage_partition: partition@70800 {
 			label = "storage";
-			reg = <0xfa000 0x6000>;
+			reg = <0x70800 0xf800>;
 		};
 	};
 };

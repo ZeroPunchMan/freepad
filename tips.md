@@ -21,3 +21,34 @@
 调用 k_yield() 将线程放到调度器维护的按照优先级排列的就绪线程链表中，然后调用调度器。在该线程被再次调度前，所有优先级高于或等于该线程的就绪线程都将得以执行。如果不存在优先级更高或相等的线程，调度器将不会进行上下文切换，立即再次调度该线程。
 调用 k_sleep() 让该线程在一段指定时间内变为非就绪线程。所有 优先级的就绪线程都可能得以执行；不过，不能保证优先级低于该睡眠线程的其它线程都能在睡眠线程再次变为就绪线程前执行完。
 ```
+
+```
+RAM布局 
+CONFIG_IS_BOOTLOADER开启后,CONFIG_BOOTLOADER_SRAM_SIZE配置boot的ram尺寸,放在ram最后面,后续zephyr版本废弃掉,要用设备树配置,具体怎么配置还没查到
+但CONFIG_IS_BOOTLOADER似乎没什么影响?
+
+chosen {
+		zephyr,sram = &sram0;
+	};
+选择用到的配置
+```
+
+```
+FLASH布局
+nrf52840.dtsi中定义了
+flash0: flash@0
+限制flash从地址0开始
+
+nrf52840_qiaa.dtsi中定义了
+&flash0 {
+	reg = <0x00000000 DT_SIZE_K(1024)>;
+};
+给出了falsh起始地址和大小,起始地址与flash@0要相同
+
+板子配置partitions做分区
+chosen {
+		zephyr,flash = &flash0;
+		zephyr,code-partition = &boot_partition;
+	};
+选择用到的配置
+```
