@@ -66,33 +66,16 @@ static void interrupt_handler(const struct device *dev, void *user_data)
             static uint8_t sb[64];
             static int rb_len = 0, send_len = 0;
 
-            // rb_len = ring_buf_get(&sendRingBuffer, sb, sizeof(sb));
-            // if (rb_len)
-            // {
-            //     send_len = uart_fifo_fill(dev, sb, rb_len);
-            // }
-            // else
-            // {
-            //     uart_irq_tx_disable(dev);
-            //     break;
-            // }
-
-            if (send_len >= rb_len)
-            { // 之前数据已经发完,拉新的数据
-                rb_len = ring_buf_get(&sendRingBuffer, sb, sizeof(sb));
-                if (rb_len)
-                { // 拉取到数据,清零已发字节数
-                    send_len = 0;
-                }
-                else
-                { // 没拉取到数据,关闭发送中断
-                    uart_irq_tx_disable(dev);
-                    break;
-                }
+            rb_len = ring_buf_get(&sendRingBuffer, sb, sizeof(sb));
+            memcpy(sb, "12345", 5);
+            if (rb_len)
+            {
+                send_len = uart_fifo_fill(dev, sb, 5);
             }
             else
-            { // send_len < rb_len,还未发完
-                send_len += uart_fifo_fill(dev, sb + send_len, rb_len - send_len);
+            {
+                uart_irq_tx_disable(dev);
+                break;
             }
         }
     }
