@@ -49,15 +49,15 @@
 
 		boot_partition: partition@0 {
 			label = "lboot";
-			reg = <0x0 0x25800>;
+			reg = <0x0 0x28000>;
 		};
-		app_partition: partition@25800 {
+		app_partition: partition@28000 {
 			label = "image-0";
-			reg = <0x25800 0x4b000>;
+			reg = <0x28000 0x4b000>;
 		};
-		storage_partition: partition@70800 {
+		storage_partition: partition@73000 {
 			label = "storage";
-			reg = <0x70800 0xf800>;
+			reg = <0x73000 0xD000>;
 		};
 	};
 };
