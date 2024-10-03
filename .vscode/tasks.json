@@ -1,0 +1,22 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "gen signature",
+            "type": "shell",
+            "command": "python D:\\Workwork\\keys\\dfu_sign.py signfile ./build/zephyr/zephyr.bin D:\\Workwork\\keys\\keys\\dfu-private.pem"
+        },
+        {
+            "label": "verify signature",
+            "type": "shell",
+            "command": "python D:\\Workwork\\keys\\dfu_sign.py verisig ./build/zephyr/zephyr.bin ./build/zephyr/zephyr.bin.sig D:\\Workwork\\keys\\keys\\dfu-public.pem "
+        },
+        {
+            "label": "print verify key",
+            "type": "shell",
+            "command": "python D:\\Workwork\\keys\\dfu_sign.py vkarray D:\\Workwork\\keys\\keys\\dfu-public.pem "
+        }
+    ]
+}

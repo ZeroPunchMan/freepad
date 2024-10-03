@@ -1,26 +1,9 @@
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>
 
-#include "usb_agent.h"
-
 
 #define LED0_NODE DT_ALIAS(led0)
 static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(LED0_NODE, gpios);
-
-void dfu(void)
-{
-	while (true)
-	{
-		uint8_t buff[64];
-		uint32_t recvLen = RecvData(buff, sizeof(buff));
-		if (recvLen)
-		{
-			SendData(buff, recvLen);
-		}
-	}
-
-}
-
 
 void blink(void)
 {
@@ -45,7 +28,8 @@ void blink(void)
 			return ;
 		}
 
-		k_msleep(1000);
+		k_msleep(200);
+		printk("blink");
 	}
 	return ;
 }
@@ -55,5 +39,3 @@ void blink(void)
 K_THREAD_DEFINE(blink_id, STACKSIZE, blink, NULL, NULL, NULL,
 				1, 0, 0);
 
-K_THREAD_DEFINE(dfu_id, STACKSIZE, dfu, NULL, NULL, NULL,
-				2, 0, 0);
